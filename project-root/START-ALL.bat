@@ -1,0 +1,23 @@
+@echo off
+echo Starting all services...
+
+echo Starting Flight Info Service...
+start "Flight Info Service" cmd /k "cd /d services\flight-info-service && mvn spring-boot:run"
+
+echo Starting Pilot Service...
+start "Pilot Service" cmd /k "cd /d services\pilot-service && mvn spring-boot:run"
+
+echo Starting Cabin Service...
+start "Cabin Service" cmd /k "cd /d services\cabin-service && mvn spring-boot:run"
+
+echo Starting Passenger Service...
+start "Passenger Service" cmd /k "cd /d services\passenger-service && mvn spring-boot:run"
+
+echo Starting Main System...
+start "Main System" cmd /k "cd /d main-system && mvn spring-boot:run"
+
+echo Starting Frontend...
+start "Frontend" cmd /k "cd /d frontend && npm start"
+
+echo All services started!
+pause

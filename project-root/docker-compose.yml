@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Flight Info Service
+  flight-info-db:
+    image: postgres:15
+    container_name: flight-info-db
+    environment:
+      POSTGRES_DB: flight_info_db
+      POSTGRES_USER: flight_user
+      POSTGRES_PASSWORD: flight_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - flight_info_data:/var/lib/postgresql/data
+    networks:
+      - flight-network
+
+  # PostgreSQL Database for Pilot Service
+  pilot-db:
+    image: postgres:15
+    container_name: pilot-db
+    environment:
+      POSTGRES_DB: pilot_db
+      POSTGRES_USER: pilot_user
+      POSTGRES_PASSWORD: pilot_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pilot_data:/var/lib/postgresql/data
+    networks:
+      - flight-network
+
+  # PostgreSQL Database for Cabin Service
+  cabin-db:
+    image: postgres:15
+    container_name: cabin-db
+    environment:
+      POSTGRES_DB: cabin_db
+      POSTGRES_USER: cabin_user
+      POSTGRES_PASSWORD: cabin_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - cabin_data:/var/lib/postgresql/data
+    networks:
+      - flight-network
+
+  # PostgreSQL Database for Passenger Service
+  passenger-db:
+    image: postgres:15
+    container_name: passenger-db
+    environment:
+      POSTGRES_DB: passenger_db
+      POSTGRES_USER: passenger_user
+      POSTGRES_PASSWORD: passenger_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - passenger_data:/var/lib/postgresql/data
+    networks:
+      - flight-network
+
+  # PostgreSQL Database for Main System
+  main-db:
+    image: postgres:15
+    container_name: main-db
+    environment:
+      POSTGRES_DB: main_db
+      POSTGRES_USER: main_user
+      POSTGRES_PASSWORD: main_pass
+    ports:
+      - "5436:5432"
+    volumes:
+      - main_data:/var/lib/postgresql/data
+    networks:
+      - flight-network
+
+  # Note: Java services and frontend will be run locally using batch files
+  # Only databases are containerized
+
+volumes:
+  flight_info_data:
+  pilot_data:
+  cabin_data:
+  passenger_data:
+  main_data:
+
+networks:
+  flight-network:
+    driver: bridge
