@@ -167,6 +167,68 @@ public class DataLoader implements CommandLineRunner {
             pilotRepository.save(pilot10);
         }
 
+        // Boeing 777-300ER pilotları ekle
+        if (pilotRepository.findByPilotId("P011").isEmpty()) {
+            Pilot pilot11 = new Pilot();
+            pilot11.setPilotId("P011");
+            pilot11.setName("Captain James Wilson");
+            pilot11.setAge(48);
+            pilot11.setGender("Male");
+            pilot11.setNationality("American");
+            pilot11.setKnownLanguages("[\"English\", \"Spanish\"]");
+            pilot11.setVehicleRestriction("Boeing 777-300ER");
+            pilot11.setMaxDistanceKm(8000.0);
+            pilot11.setSeniorityLevel(SeniorityLevel.SENIOR);
+            pilot11.setIsAvailable(true);
+            pilotRepository.save(pilot11);
+        }
+
+        if (pilotRepository.findByPilotId("P012").isEmpty()) {
+            Pilot pilot12 = new Pilot();
+            pilot12.setPilotId("P012");
+            pilot12.setName("Captain Sarah Johnson");
+            pilot12.setAge(44);
+            pilot12.setGender("Female");
+            pilot12.setNationality("Canadian");
+            pilot12.setKnownLanguages("[\"English\", \"French\"]");
+            pilot12.setVehicleRestriction("Boeing 777-300ER");
+            pilot12.setMaxDistanceKm(7500.0);
+            pilot12.setSeniorityLevel(SeniorityLevel.SENIOR);
+            pilot12.setIsAvailable(true);
+            pilotRepository.save(pilot12);
+        }
+
+        // Airbus A330 pilotları ekle
+        if (pilotRepository.findByPilotId("P013").isEmpty()) {
+            Pilot pilot13 = new Pilot();
+            pilot13.setPilotId("P013");
+            pilot13.setName("Captain Michael Brown");
+            pilot13.setAge(41);
+            pilot13.setGender("Male");
+            pilot13.setNationality("British");
+            pilot13.setKnownLanguages("[\"English\", \"German\"]");
+            pilot13.setVehicleRestriction("Airbus A330");
+            pilot13.setMaxDistanceKm(6000.0);
+            pilot13.setSeniorityLevel(SeniorityLevel.SENIOR);
+            pilot13.setIsAvailable(true);
+            pilotRepository.save(pilot13);
+        }
+
+        if (pilotRepository.findByPilotId("P014").isEmpty()) {
+            Pilot pilot14 = new Pilot();
+            pilot14.setPilotId("P014");
+            pilot14.setName("Captain Lisa Davis");
+            pilot14.setAge(37);
+            pilot14.setGender("Female");
+            pilot14.setNationality("Australian");
+            pilot14.setKnownLanguages("[\"English\", \"Japanese\"]");
+            pilot14.setVehicleRestriction("Airbus A330");
+            pilot14.setMaxDistanceKm(5500.0);
+            pilot14.setSeniorityLevel(SeniorityLevel.JUNIOR);
+            pilot14.setIsAvailable(true);
+            pilotRepository.save(pilot14);
+        }
+
         System.out.println("Örnek pilot verileri yüklendi!");
     }
 }
