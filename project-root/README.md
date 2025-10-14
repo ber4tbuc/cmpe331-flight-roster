@@ -111,8 +111,48 @@ brew install openjdk@17 node maven postgresql@18
 
 3. **Start Frontend:**
    ```bash
-   cd frontend && npm install && npm start
+   cd frontend
+   npm install    # Install dependencies
+   npm start      # Start React app
    ```
+
+## 🔧 **Troubleshooting**
+
+### **Common Issues:**
+
+#### **1. "index.html not found" Error:**
+```bash
+# Make sure public folder exists
+ls frontend/public/
+# Should show: index.html, favicon.ico, manifest.json
+```
+
+#### **2. "Cannot find module" Error:**
+```bash
+# Delete node_modules and reinstall
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### **3. "Port already in use" Error:**
+```bash
+# Kill processes on ports
+# Windows:
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
+
+# macOS/Linux:
+lsof -ti:8080 | xargs kill -9
+```
+
+#### **4. Database Connection Error:**
+```bash
+# Check PostgreSQL is running
+# Windows: Check Services
+# macOS: brew services list | grep postgresql
+# Linux: sudo systemctl status postgresql
+```
 
 ## 🏗️ Architecture
 
