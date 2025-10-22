@@ -85,4 +85,22 @@ public class PilotService {
     public List<Pilot> getPilotsByIds(List<Long> ids) {
         return pilotRepository.findAllById(ids);
     }
+
+    public Pilot updateAvailability(Long id, Boolean isAvailable) {
+        Optional<Pilot> optionalPilot = pilotRepository.findById(id);
+        if (optionalPilot.isPresent()) {
+            Pilot pilot = optionalPilot.get();
+            pilot.setIsAvailable(isAvailable);
+            return pilotRepository.save(pilot);
+        }
+        return null;
+    }
+
+    public List<Pilot> updateBulkAvailability(List<Long> ids, Boolean isAvailable) {
+        List<Pilot> pilots = pilotRepository.findAllById(ids);
+        for (Pilot pilot : pilots) {
+            pilot.setIsAvailable(isAvailable);
+        }
+        return pilotRepository.saveAll(pilots);
+    }
 }

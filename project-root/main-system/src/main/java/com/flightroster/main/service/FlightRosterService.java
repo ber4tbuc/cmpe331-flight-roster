@@ -126,7 +126,24 @@ public class FlightRosterService {
 
             roster.setRosterData(objectMapper.writeValueAsString(rosterData));
 
-            return flightRosterRepository.save(roster);
+            // Save roster first
+            FlightRoster savedRoster = flightRosterRepository.save(roster);
+            
+            // Update pilot availability to false (they are now assigned)
+            try {
+                List<Long> pilotIds = pilots.stream()
+                    .map(pilot -> ((Number) pilot.get("id")).longValue())
+                    .collect(Collectors.toList());
+                
+                if (!pilotIds.isEmpty()) {
+                    pilotClient.updateBulkAvailability(pilotIds, false);
+                }
+            } catch (Exception e) {
+                // Log error but don't fail roster creation
+                System.err.println("Warning: Could not update pilot availability: " + e.getMessage());
+            }
+
+            return savedRoster;
 
         } catch (Exception e) {
             throw new RuntimeException("Error creating roster: " + e.getMessage(), e);

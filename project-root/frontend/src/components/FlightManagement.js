@@ -50,6 +50,7 @@ const FlightManagement = () => {
 
   useEffect(() => {
     loadFlights();
+    checkRosterStatus();
   }, []);
 
   const loadFlights = () => {
@@ -75,6 +76,29 @@ const FlightManagement = () => {
       ];
       setFlights(defaultFlights);
       localStorage.setItem('flights', JSON.stringify(defaultFlights));
+    }
+  };
+
+  const checkRosterStatus = async () => {
+    try {
+      // Get all rosters from backend
+      const response = await fetch('http://localhost:8080/api/rosters');
+      if (response.ok) {
+        const rosters = await response.json();
+        const flightsWithRosters = rosters.map(roster => roster.flightNumber);
+        
+        // Update flights in localStorage
+        const flights = JSON.parse(localStorage.getItem('flights') || '[]');
+        const updatedFlights = flights.map(flight => ({
+          ...flight,
+          hasRosters: flightsWithRosters.includes(flight.number)
+        }));
+        
+        localStorage.setItem('flights', JSON.stringify(updatedFlights));
+        setFlights(updatedFlights);
+      }
+    } catch (err) {
+      console.error('Error checking roster status:', err);
     }
   };
 
@@ -142,6 +166,14 @@ const FlightManagement = () => {
   };
 
   const handleDelete = (id) => {
+    // Check if flight has rosters
+    const flight = flights.find(f => f.id === id);
+    if (flight && flight.hasRosters) {
+      setError('Cannot delete flight with existing rosters!');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this flight?')) {
       const updatedFlights = flights.filter(f => f.id !== id);
       saveFlights(updatedFlights);
@@ -227,6 +259,14 @@ const FlightManagement = () => {
                     <Typography variant="body2" color="textSecondary">
                       Capacity: {flight.capacity} passengers
                     </Typography>
+                    {flight.hasRosters && (
+                      <Chip 
+                        label="Has Rosters" 
+                        color="warning" 
+                        size="small" 
+                        sx={{ mt: 1 }}
+                      />
+                    )}
                   </Box>
                   <Box>
                     <IconButton

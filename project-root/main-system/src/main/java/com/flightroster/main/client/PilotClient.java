@@ -40,4 +40,10 @@ public class PilotClient {
         String url = pilotServiceUrl + "/api/pilots/by-ids";
         return restTemplate.postForObject(url, ids, List.class);
     }
+
+    public List<Map<String, Object>> updateBulkAvailability(List<Long> ids, Boolean isAvailable) {
+        String url = pilotServiceUrl + "/api/pilots/bulk-availability?isAvailable=" + isAvailable;
+        restTemplate.put(url, ids);
+        return getPilotsByIds(ids); // Return updated pilots
+    }
 }

@@ -129,6 +129,15 @@ const CreateRoster = () => {
       // Update existing rosters list to prevent duplicate creation
       setExistingRosters(prev => [...prev, response.data]);
       
+      // Mark flight as having rosters in localStorage
+      const flights = JSON.parse(localStorage.getItem('flights') || '[]');
+      const updatedFlights = flights.map(flight => 
+        flight.number === flightNumber 
+          ? { ...flight, hasRosters: true }
+          : flight
+      );
+      localStorage.setItem('flights', JSON.stringify(updatedFlights));
+      
       // Set created roster and show crew selection
       console.log('Roster created:', response.data);
       setCreatedRoster(response.data);
