@@ -38,7 +38,6 @@ const FlightManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
-  const [flightsWithRosters, setFlightsWithRosters] = useState(new Set());
   
   const [formData, setFormData] = useState({
     number: '',
@@ -51,21 +50,8 @@ const FlightManagement = () => {
 
   useEffect(() => {
     loadFlights();
-    checkRosters();
+    checkRosterStatus();
   }, []);
-
-  const checkRosters = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/rosters');
-      if (response.ok) {
-        const rosters = await response.json();
-        const flightNumbers = new Set(rosters.map(roster => roster.flightNumber));
-        setFlightsWithRosters(flightNumbers);
-      }
-    } catch (error) {
-      console.warn('Could not check roster status:', error);
-    }
-  };
 
   const loadFlights = () => {
     // Load flights from localStorage
@@ -90,6 +76,29 @@ const FlightManagement = () => {
       ];
       setFlights(defaultFlights);
       localStorage.setItem('flights', JSON.stringify(defaultFlights));
+    }
+  };
+
+  const checkRosterStatus = async () => {
+    try {
+      // Get all rosters from backend
+      const response = await fetch('http://localhost:8080/api/rosters');
+      if (response.ok) {
+        const rosters = await response.json();
+        const flightsWithRosters = rosters.map(roster => roster.flightNumber);
+        
+        // Update flights in localStorage
+        const flights = JSON.parse(localStorage.getItem('flights') || '[]');
+        const updatedFlights = flights.map(flight => ({
+          ...flight,
+          hasRosters: flightsWithRosters.includes(flight.number)
+        }));
+        
+        localStorage.setItem('flights', JSON.stringify(updatedFlights));
+        setFlights(updatedFlights);
+      }
+    } catch (err) {
+      console.error('Error checking roster status:', err);
     }
   };
 
@@ -122,7 +131,7 @@ const FlightManagement = () => {
     setError(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     // Validation
     if (!formData.number || !formData.destination) {
       setError('Flight number and destination are required');
@@ -135,118 +144,34 @@ const FlightManagement = () => {
       route
     };
 
-    try {
-      if (editingFlight) {
-        // Update existing flight
-        const updatedFlights = flights.map(f => 
-          f.id === editingFlight.id ? { ...flightData, id: editingFlight.id } : f
-        );
-        saveFlights(updatedFlights);
-        setSuccess('Flight updated successfully!');
-      } else {
-        // Add new flight
-        const newFlight = {
-          ...flightData,
-          id: Math.max(...flights.map(f => f.id), 0) + 1
-        };
-        saveFlights([...flights, newFlight]);
-        setSuccess('Flight added successfully!');
-        
-        // Also save to backend
-        try {
-          await saveFlightToBackend(newFlight);
-        } catch (backendError) {
-          console.warn('Could not save to backend:', backendError);
-          // Continue with localStorage save even if backend fails
-        }
-      }
-
-      handleCloseDialog();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setError('Failed to save flight');
-    }
-  };
-
-  const saveFlightToBackend = async (flight) => {
-    try {
-      // First, get the required entities from backend
-      const [sourceAirport, destinationAirport, vehicleType] = await Promise.all([
-        fetch('http://localhost:8081/api/airports/code/IST').then(r => r.json()),
-        fetch(`http://localhost:8081/api/airports/code/${getAirportCode(flight.destination)}`).then(r => r.json()),
-        fetch('http://localhost:8081/api/vehicle-types').then(r => r.json()).then(types => 
-          types.find(t => t.typeName === flight.aircraft)
-        )
-      ]);
-
-      // Map frontend flight data to backend format
-      const backendFlight = {
-        flightNumber: flight.number,
-        flightDate: new Date().toISOString(),
-        durationMinutes: 180, // Default duration
-        distanceKm: 1000.0, // Default distance
-        sourceAirport: sourceAirport,
-        destinationAirport: destinationAirport,
-        vehicleType: vehicleType,
-        isSharedFlight: false
+    if (editingFlight) {
+      // Update existing flight
+      const updatedFlights = flights.map(f => 
+        f.id === editingFlight.id ? { ...flightData, id: editingFlight.id } : f
+      );
+      saveFlights(updatedFlights);
+      setSuccess('Flight updated successfully!');
+    } else {
+      // Add new flight
+      const newFlight = {
+        ...flightData,
+        id: Math.max(...flights.map(f => f.id), 0) + 1
       };
-
-      // Call FlightInfoService API
-      const response = await fetch('http://localhost:8081/api/flights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(backendFlight)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to save flight to backend: ${response.status} - ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Backend save error:', error);
-      throw error;
+      saveFlights([...flights, newFlight]);
+      setSuccess('Flight added successfully!');
     }
+
+    handleCloseDialog();
+    setTimeout(() => setSuccess(null), 3000);
   };
 
-  const getAirportCode = (destination) => {
-    const airportMap = {
-      'Ankara': 'ESB',
-      'London': 'LHR',
-      'Paris': 'CDG',
-      'Berlin': 'TXL',
-      'Rome': 'FCO',
-      'New York': 'JFK',
-      'Dubai': 'DXB',
-      'Tokyo': 'NRT',
-      'Madrid': 'MAD',
-      'Amsterdam': 'AMS',
-      'Frankfurt': 'FRA',
-      'Moscow': 'SVO'
-    };
-    return airportMap[destination] || 'IST';
-  };
-
-  const handleDelete = async (id) => {
-    const flightToDelete = flights.find(f => f.id === id);
-    
-    // Check if flight has an existing roster
-    try {
-      const response = await fetch(`http://localhost:8080/api/rosters?flightNumber=${flightToDelete.number}`);
-      if (response.ok) {
-        const rosters = await response.json();
-        const hasRoster = rosters.some(roster => roster.flightNumber === flightToDelete.number);
-        
-        if (hasRoster) {
-          setError(`Cannot delete flight ${flightToDelete.number}. This flight has an existing roster. Please delete the roster first.`);
-          setTimeout(() => setError(null), 5000);
-          return;
-        }
-      }
-    } catch (error) {
-      console.warn('Could not check roster status:', error);
-      // Continue with deletion if we can't check
+  const handleDelete = (id) => {
+    // Check if flight has rosters
+    const flight = flights.find(f => f.id === id);
+    if (flight && flight.hasRosters) {
+      setError('Cannot delete flight with existing rosters!');
+      setTimeout(() => setError(null), 3000);
+      return;
     }
     
     if (window.confirm('Are you sure you want to delete this flight?')) {
@@ -316,63 +241,54 @@ const FlightManagement = () => {
 
       {/* Flight Cards */}
       <Grid container spacing={2}>
-        {filteredFlights.map((flight) => {
-          const hasRoster = flightsWithRosters.has(flight.number);
-          return (
-            <Grid item xs={12} sm={6} md={4} key={flight.id}>
-              <Card sx={{ 
-                border: hasRoster ? '2px solid #4caf50' : '1px solid #e0e0e0',
-                backgroundColor: hasRoster ? '#f8fff8' : 'white'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="h6">
-                          {flight.number}
-                        </Typography>
-                        {hasRoster && (
-                          <Chip 
-                            label="Has Roster" 
-                            size="small" 
-                            color="success"
-                          />
-                        )}
-                      </Box>
-                      <Typography color="textSecondary" gutterBottom>
-                        {flight.route}
-                      </Typography>
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        Aircraft: {flight.aircraft}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Capacity: {flight.capacity} passengers
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(flight)}
-                        color="primary"
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(flight.id)}
-                        color="error"
-                        disabled={hasRoster}
-                        title={hasRoster ? "Cannot delete flight with existing roster" : "Delete flight"}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Box>
+        {filteredFlights.map((flight) => (
+          <Grid item xs={12} sm={6} md={4} key={flight.id}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" gutterBottom>
+                      {flight.number}
+                    </Typography>
+                    <Typography color="textSecondary" gutterBottom>
+                      {flight.route}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      Aircraft: {flight.aircraft}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Capacity: {flight.capacity} passengers
+                    </Typography>
+                    {flight.hasRosters && (
+                      <Chip 
+                        label="Has Rosters" 
+                        color="warning" 
+                        size="small" 
+                        sx={{ mt: 1 }}
+                      />
+                    )}
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
+                  <Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenDialog(flight)}
+                      color="primary"
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDelete(flight.id)}
+                      color="error"
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       {filteredFlights.length === 0 && (

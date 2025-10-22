@@ -1,5 +1,7 @@
 # Maven
 target/
+*.jar
+*.jar.original
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -94,7 +96,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public  # Commented out - we need public folder for React
 
 # Storybook build outputs
 .out
@@ -174,7 +176,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public  # Commented out - we need public folder for React
 
 # Storybook build outputs
 .out

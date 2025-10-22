@@ -93,4 +93,19 @@ public class PilotController {
         List<Pilot> pilots = pilotService.getPilotsByIds(ids);
         return ResponseEntity.ok(pilots);
     }
+
+    @PutMapping("/{id}/availability")
+    public ResponseEntity<Pilot> updateAvailability(@PathVariable Long id, @RequestParam Boolean isAvailable) {
+        Pilot pilot = pilotService.updateAvailability(id, isAvailable);
+        if (pilot != null) {
+            return ResponseEntity.ok(pilot);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/bulk-availability")
+    public ResponseEntity<List<Pilot>> updateBulkAvailability(@RequestBody List<Long> ids, @RequestParam Boolean isAvailable) {
+        List<Pilot> pilots = pilotService.updateBulkAvailability(ids, isAvailable);
+        return ResponseEntity.ok(pilots);
+    }
 }

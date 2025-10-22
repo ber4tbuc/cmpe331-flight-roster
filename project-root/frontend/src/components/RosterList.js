@@ -68,6 +68,16 @@ const RosterList = () => {
     try {
       await rosterAPI.deleteRoster(deleteDialog.roster.id);
       setRosters(rosters.filter(r => r.id !== deleteDialog.roster.id));
+      
+      // Remove hasRosters flag from flight in localStorage
+      const flights = JSON.parse(localStorage.getItem('flights') || '[]');
+      const updatedFlights = flights.map(flight => 
+        flight.number === deleteDialog.roster.flightNumber 
+          ? { ...flight, hasRosters: false }
+          : flight
+      );
+      localStorage.setItem('flights', JSON.stringify(updatedFlights));
+      
       setDeleteDialog({ open: false, roster: null });
     } catch (err) {
       console.error('Error deleting roster:', err);
